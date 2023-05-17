@@ -15,7 +15,7 @@
           {{ appTitle }}
         </q-toolbar-title>
 
-        <div>Quasar v{{ $q.version }}</div>
+        <div>Today is {{ todaysDate }}</div>
       </q-toolbar>
     </q-header>
 
@@ -34,11 +34,24 @@
     <q-page-container>
       <router-view />
     </q-page-container>
+
+    <q-footer elevated class="bg-secondary text-white">
+      <q-toolbar>
+        <q-avatar>
+          <img src="~assets/mvs013.svg" />
+        </q-avatar>
+        <q-toolbar-title>
+          {{ mainSlogan }}
+        </q-toolbar-title>
+      </q-toolbar>
+      <div class="quasar__ver">Dev on Quasar {{ $q.version }}</div>
+    </q-footer>
   </q-layout>
 </template>
 
 <script>
 import { defineComponent, ref } from "vue";
+import { date } from "quasar";
 import EssentialLink from "components/EssentialLink.vue";
 
 const linksList = [
@@ -104,6 +117,12 @@ export default defineComponent({
       },
       appTitle: "Our Events",
     };
+  },
+  computed: {
+    todaysDate() {
+      const timeStamp = Date.now();
+      return date.formatDate(timeStamp, "dddd - DD.MMMM.YYYY - HH:mm");
+    },
   },
 });
 </script>
