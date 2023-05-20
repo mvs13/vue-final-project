@@ -6,7 +6,7 @@
           flat
           dense
           round
-          icon="menu"
+          icon="fa-solid fa-angles-right"
           aria-label="Menu"
           @click="toggleLeftDrawer"
         />
@@ -35,15 +35,16 @@
       <router-view />
     </q-page-container>
 
-    <q-footer elevated class="bg-secondary text-white">
+    <q-footer elevated class="bg-secondary footer">
       <q-toolbar>
         <q-avatar>
-          <img src="~assets/mvs013.svg" />
+          <!-- <img src="~assets/mvs013.svg" /> -->
         </q-avatar>
         <q-toolbar-title>
           {{ mainSlogan }}
         </q-toolbar-title>
       </q-toolbar>
+      <div class="clerk__store">{{ clerkStore.counter }}</div>
       <div class="quasar__ver">Dev on Quasar {{ $q.version }}</div>
     </q-footer>
   </q-layout>
@@ -53,49 +54,43 @@
 import { defineComponent, ref } from "vue";
 import { date } from "quasar";
 import EssentialLink from "components/EssentialLink.vue";
+import { useClerkStore } from "stores/clerk";
+import Clerk from "@clerk/clerk-js";
+
+async function initClerk(store) {
+  // store.clerkFrontendApi = "ultimate-shrew-53.clerk.accounts.dev";
+  store.clerk = new Clerk(store.publishableKey);
+  await store.clerk.load({
+    // Set load options here...
+  });
+  // console.log(store.clerk.isReady());
+  // console.log(store.clerk);
+}
 
 const linksList = [
   {
-    title: "Docs",
-    caption: "quasar.dev",
-    icon: "school",
-    link: "https://quasar.dev",
+    title: "Sign In",
+    caption: "For registered users",
+    icon: "fa-solid fa-right-to-bracket",
+    link: "/sign-in",
   },
   {
-    title: "Github",
-    caption: "github.com/quasarframework",
-    icon: "code",
-    link: "https://github.com/quasarframework",
+    title: "Sign Up",
+    caption: "For new users",
+    icon: "fa-solid fa-user-plus",
+    link: "/sign-up",
   },
   {
-    title: "Discord Chat Channel",
-    caption: "chat.quasar.dev",
-    icon: "chat",
-    link: "https://chat.quasar.dev",
+    title: "Account",
+    caption: "User's personal account",
+    icon: "fa-solid fa-user",
+    link: "/account",
   },
   {
-    title: "Forum",
-    caption: "forum.quasar.dev",
-    icon: "record_voice_over",
-    link: "https://forum.quasar.dev",
-  },
-  {
-    title: "Twitter",
-    caption: "@quasarframework",
-    icon: "rss_feed",
-    link: "https://twitter.quasar.dev",
-  },
-  {
-    title: "Facebook",
-    caption: "@QuasarFramework",
-    icon: "public",
-    link: "https://facebook.quasar.dev",
-  },
-  {
-    title: "Quasar Awesome",
-    caption: "Community Quasar projects",
-    icon: "favorite",
-    link: "https://awesome.quasar.dev",
+    title: "Home",
+    caption: "Go to site root",
+    icon: "fa-solid fa-house",
+    link: "/",
   },
 ];
 
@@ -109,6 +104,9 @@ export default defineComponent({
   setup() {
     const leftDrawerOpen = ref(false);
 
+    const clerkStore = useClerkStore();
+    initClerk(clerkStore);
+
     return {
       essentialLinks: linksList,
       leftDrawerOpen,
@@ -116,6 +114,7 @@ export default defineComponent({
         leftDrawerOpen.value = !leftDrawerOpen.value;
       },
       appTitle: "Our Events",
+      clerkStore,
     };
   },
   computed: {
@@ -126,3 +125,9 @@ export default defineComponent({
   },
 });
 </script>
+
+<style>
+.footer {
+  display: flex;
+}
+</style>

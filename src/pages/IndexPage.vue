@@ -54,7 +54,9 @@
                 round
                 flat
                 dense
-                :icon="expanded ? 'keyboard_arrow_up' : 'keyboard_arrow_down'"
+                :icon="
+                  expanded ? 'fa-solid fa-angle-up' : 'fa-solid fa-angle-down'
+                "
                 @click="expanded = !expanded"
               />
               <q-slide-transition>
@@ -123,5 +125,6 @@ export default defineComponent({
   background-color: $primary;
 }
 .event__type__title {
+  color: white;
 }
 </style>
