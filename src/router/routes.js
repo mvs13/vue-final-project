@@ -4,11 +4,13 @@ const routes = [
     component: () => import("layouts/MainLayout.vue"),
     children: [
       { path: "", component: () => import("pages/IndexPage.vue") },
-      { path: "/sign-in", component: () => import("pages/SignIn.vue") },
-      { path: "/sign-up", component: () => import("pages/SignUp.vue") },
       {
         path: "/account",
         component: () => import("src/pages/AccountPage.vue"),
+      },
+      {
+        path: "/users-events",
+        component: () => import("pages/UserEvents.vue"),
       },
     ],
   },

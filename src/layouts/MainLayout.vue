@@ -69,6 +69,25 @@ async function initClerk(store) {
 
 const linksList = [
   {
+    title: "Home",
+    caption: "Go to site root",
+    icon: "fa-solid fa-house",
+    link: "/",
+  },
+
+  {
+    title: "Account",
+    caption: "User's personal account",
+    icon: "fa-solid fa-user",
+    link: "/account",
+  },
+  {
+    title: "User`s Events",
+    caption: "Are you planning to take part in such events",
+    icon: "fa-solid fa-calendar",
+    link: "/users-events",
+  },
+  {
     title: "Sign In",
     caption: "For registered users",
     icon: "fa-solid fa-right-to-bracket",
@@ -79,18 +98,6 @@ const linksList = [
     caption: "For new users",
     icon: "fa-solid fa-user-plus",
     link: "/sign-up",
-  },
-  {
-    title: "Account",
-    caption: "User's personal account",
-    icon: "fa-solid fa-user",
-    link: "/account",
-  },
-  {
-    title: "Home",
-    caption: "Go to site root",
-    icon: "fa-solid fa-house",
-    link: "/",
   },
 ];
 

@@ -22,7 +22,7 @@
     </div>
     <div
       v-else-if="result && result.events"
-      class="event__card__row q-gutter-sm full-height row wrap justify-center items-start content-stretch"
+      class="event__card__row q-gutter-sm row wrap justify-center items-start content-stretch"
     >
       <div
         v-for="item in result.events"
@@ -45,36 +45,52 @@
             <div class="event__type__title">
               {{ item.events_eventType.title }}
             </div>
+          </q-card-section>
+          <q-card-section
+            horizontal
+            class="flex items-center justify-between q-pa-sm"
+          >
             <div class="text-h5 q-mt-sm q-mb-xs">
               {{ item.title }}
             </div>
             <div class="event__descr" v-if="item.descr">
               <q-btn
-                color="grey"
+                color="accent"
                 round
                 flat
-                dense
+                style="bg-secondary"
                 :icon="
                   expanded ? 'fa-solid fa-angle-up' : 'fa-solid fa-angle-down'
                 "
-                @click="expanded = !expanded"
+                @click="expandEvent(item.id)"
               />
-              <q-slide-transition>
-                <div v-show="expanded">
-                  <q-separator />
-                  <q-card-section class="text-subitle2">
-                    {{ item.descr }}
-                  </q-card-section>
-                </div>
-              </q-slide-transition>
             </div>
           </q-card-section>
+          <q-slide-transition>
+            <div :id="item.id" style="display: none">
+              <q-separator />
+              <q-card-section class="text-subitle2">
+                {{ item.descr }}
+              </q-card-section>
+              <q-separator />
+            </div>
+          </q-slide-transition>
           <q-card-actions>
-            <q-icon
+            <q-btn
+              flat
               color="secondary"
-              name="fa-solid fa-arrow-up-right-from-square"
+              class="bg-accent"
+              icon="fa-solid fa-arrow-up-right-from-square"
+              label="External link"
             />
-            <q-btn flat color="secondary" class="bg-accent">Attend</q-btn>
+            <q-btn
+              flat
+              color="secondary"
+              class="bg-accent"
+              icon="fa-regular fa-calendar-plus"
+              label="Attend"
+              @click="eventAttend(item.id)"
+            />
           </q-card-actions>
         </q-card>
       </div>
@@ -83,7 +99,7 @@
 </template>
 
 <script>
-import { defineComponent } from "vue";
+import { ref, defineComponent } from "vue";
 import { useQuery } from "@vue/apollo-composable";
 import gql from "graphql-tag";
 
@@ -112,7 +128,24 @@ export default defineComponent({
       result,
       loading,
       error,
+      expanded: ref([]),
     };
+  },
+  methods: {
+    eventAttend(event_id) {
+      console.log("eventAttend: " + event_id);
+    },
+    expandEvent(event_id) {
+      const operateBlock = document.getElementById(event_id);
+      if (operateBlock.style.display == "none") {
+        operateBlock.style.display = "block";
+      } else {
+        operateBlock.style.display = "none";
+      }
+      // console.log(
+      //   "expandEvent: " + event_id + ", state: " + operateBlock.visible
+      // );
+    },
   },
 });
 </script>
