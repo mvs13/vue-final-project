@@ -6,7 +6,11 @@
           flat
           dense
           round
-          icon="fa-solid fa-angles-right"
+          :icon="
+            leftDrawerOpen
+              ? 'fa-solid fa-angles-left'
+              : 'fa-solid fa-angles-right'
+          "
           aria-label="Menu"
           @click="toggleLeftDrawer"
         />

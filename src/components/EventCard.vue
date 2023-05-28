@@ -67,6 +67,11 @@
 </template>
 
 <script>
+import { ref } from "vue";
+import { useClerkStore } from "stores/clerk";
+import { useQuery, useMutation } from "@vue/apollo-composable";
+import gql from "graphql-tag";
+
 export default {
   name: "EventCard",
   props: {
@@ -77,12 +82,114 @@ export default {
       },
     },
   },
+  setup() {
+    const userID = ref("");
+    const eventID = ref("");
+
+    const cardQuery = `query CardQuery($userID: String = "") {
+        userById: users(where: { id: { _eq: $userID } }) {
+          id
+          name
+          last_seen
+        }
+      }`;
+    const {
+      result,
+      refetch,
+      onResult: cardQueryResult,
+      onError: cardQueryError,
+    } = useQuery(gql(cardQuery), () => ({
+      userID: userID.value,
+    }));
+    function setUserID(id) {
+      userID.value = id;
+    }
+
+    const isUserEventExistQuery = `query checkUserEvent($user_id: String, $event_id: uuid) {
+      userEvents(where: {_and: {event_id: {_eq: $event_id}, user_id: {_eq: $user_id}}}) {
+        event_id
+        user_id
+      }
+    }`;
+    const {
+      result: userEventExist,
+      refetch: refetchUserEventExist,
+      onResult: resultUserEventExist,
+    } = useQuery(gql(isUserEventExistQuery), () => ({
+      user_id: userID.value,
+      event_id: eventID.value,
+    }));
+
+    const addUserEventMutation = `mutation InsertUserEvents($user_id: String, $event_id: uuid) {
+      insert_userEvents(objects: {user_id: $user_id, event_id: $event_id}) {
+        affected_rows
+        returning {
+          id
+          user_id
+          event_id
+        }
+      }
+    }`;
+    const { mutate: addUserEvent, onDone: doneAddUserEvent } = useMutation(
+      gql(addUserEventMutation),
+      () => ({
+        variables: {
+          user_id: userID.value,
+          event_id: eventID.value,
+        },
+      })
+    );
+    function setEventID(id) {
+      eventID.value = id;
+    }
+    doneAddUserEvent(() => {
+      console.log(
+        "Event(" + eventID.value + ") for User(" + iserID.value + ") was added"
+      );
+    });
+    return {
+      setEventID,
+      setUserID,
+      addUserEvent,
+      refetchUserEventExist,
+      resultUserEventExist,
+    };
+  },
   methods: {
     getImgPath(event) {
       return "img/" + (event.kdpv ? event.kdpv : event.events_eventType.image);
     },
     eventAttend(event_id) {
+      const oneClerk = useClerkStore().clerk;
+      if (oneClerk.user) {
+        this.setEventID(event_id);
+        this.setUserID(oneClerk.user.id);
+        console.log(
+          "Event(" + event_id + ") for User(" + oneClerk.user.id + ") was added"
+        );
+        let exist = this.isUserEventExist(event_id, oneClerk.user.id);
+        if (!exist) {
+          // this.doneAddUserEvent();
+        }
+      } else {
+        this.$q.notify({
+          message: "You must be signed for ourEvents if you want attend",
+          icon: "fa-solid fa-right-to-bracket",
+        });
+      }
       console.log("eventAttend: " + event_id);
+    },
+    isUserEventExist(event_id, user_id) {
+      this.setEventID(event_id);
+      this.setUserID(user_id);
+      this.refetchUserEventExist();
+      this.resultUserEventExist((queryResult) => {
+        console.log(queryResult.data);
+        console.log(queryResult.loading);
+        console.log(queryResult.networkStatus);
+        console.log(queryResult.stale);
+      });
+      return true;
     },
     expandEvent(event_id) {
       const operateBlock = document.getElementById(event_id);

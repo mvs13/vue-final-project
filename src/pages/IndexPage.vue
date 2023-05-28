@@ -45,11 +45,20 @@
           </q-card>
         </q-expansion-item>
       </div>
-      <div>length: {{ eventsListByType.length }}</div>
+      <!-- <div>SelectedType: {{ this.getSelectedType() }}</div> -->
+
       <div
+        v-if="eventsListByType.length || eventsList.length"
         class="events__list__container q-gutter-sm row wrap justify-center items-start content-stretch"
       >
+        <h3
+          v-if="this.getSelectedType() && !eventsListByType.length"
+          class="no__events__msg"
+        >
+          There are no such events in the calendar yet. Come back later.
+        </h3>
         <EventCard
+          v-else
           v-for="event in eventsListByType.length
             ? eventsListByType
             : eventsList"
@@ -58,6 +67,9 @@
           class="col-xs-12 col-sm-6 col-md-4 col-2"
         />
       </div>
+      <h3 v-else class="no__events__msg">
+        We don't have any planned events yet
+      </h3>
     </div>
   </q-page>
 </template>
@@ -112,8 +124,12 @@ export default defineComponent({
       }
     );
 
-    function selectType(type) {
+    function setSelectedType(type) {
       selectedType.value = type;
+    }
+
+    function getSelectedType() {
+      return selectedType.value;
     }
 
     let eventType = computed(() => result.value?.eventType ?? []);
@@ -136,7 +152,8 @@ export default defineComponent({
       refetch,
       eventsList,
       eventsListByType,
-      selectType,
+      setSelectedType,
+      getSelectedType,
       selectedType,
       selectedEventType: ref(null),
       eventType,
@@ -150,9 +167,9 @@ export default defineComponent({
     },
     occuredUpdate() {
       if (this.selectedEventType === null) {
-        this.selectType(0);
+        this.setSelectedType(0);
       } else {
-        this.selectType(this.selectedEventType.value);
+        this.setSelectedType(this.selectedEventType.value);
       }
       this.refetch();
       // console.log("occuredUpdate: " + this.indexQuery);
@@ -164,6 +181,10 @@ export default defineComponent({
 <style lang="scss">
 .events__serach__container {
   margin-bottom: 24px;
+}
+
+.no__events__msg {
+  text-align: center;
 }
 
 .event__card__row {
