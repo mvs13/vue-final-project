@@ -121,6 +121,7 @@ export default defineComponent({
         leftDrawerOpen.value = !leftDrawerOpen.value;
       },
       appTitle: "Our Events",
+      mainSlogan: "",
       clerkStore,
     };
   },
