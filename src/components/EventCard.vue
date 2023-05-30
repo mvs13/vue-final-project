@@ -71,6 +71,7 @@ import { ref } from "vue";
 import { useClerkStore } from "stores/clerk";
 import { useQuery, useMutation } from "@vue/apollo-composable";
 import gql from "graphql-tag";
+// import checkUserEvent from "src/apollo/queryes/countUsersEvent.gql";
 
 export default {
   name: "EventCard",
@@ -84,31 +85,41 @@ export default {
   },
   setup() {
     const userID = ref("");
-    const eventID = ref("");
-
-    const cardQuery = `query CardQuery($userID: String = "") {
-        userById: users(where: { id: { _eq: $userID } }) {
-          id
-          name
-          last_seen
-        }
-      }`;
-    const {
-      result,
-      refetch,
-      onResult: cardQueryResult,
-      onError: cardQueryError,
-    } = useQuery(gql(cardQuery), () => ({
-      userID: userID.value,
-    }));
     function setUserID(id) {
       userID.value = id;
     }
+    function getUserID() {
+      return userID.value;
+    }
+    const eventID = ref("");
+    function setEventID(id) {
+      eventID.value = id;
+    }
+    function getEventID() {
+      return eventID.value;
+    }
 
-    const isUserEventExistQuery = `query checkUserEvent($user_id: String, $event_id: uuid) {
-      userEvents(where: {_and: {event_id: {_eq: $event_id}, user_id: {_eq: $user_id}}}) {
-        event_id
-        user_id
+    // const cardQuery = `query CardQuery($userID: String = "") {
+    //     userById: users(where: { id: { _eq: $userID } }) {
+    //       id
+    //       name
+    //       last_seen
+    //     }
+    //   }`;
+    // const {
+    //   result,
+    //   refetch,
+    //   onResult: cardQueryResult,
+    //   onError: cardQueryError,
+    // } = useQuery(gql(cardQuery), () => ({
+    //   userID: userID.value,
+    // }));
+
+    const isUserEventExistQuery = `query checkUserEvent($user_id: String, $event_id: String) {
+      userEvents_aggregate(where: {_and: {event_id: {_eq: $event_id}, user_id: {_eq: $user_id}}}) {
+        aggregate {
+          count(columns: event_id)
+        }
       }
     }`;
     const {
@@ -120,7 +131,7 @@ export default {
       event_id: eventID.value,
     }));
 
-    const addUserEventMutation = `mutation InsertUserEvents($user_id: String, $event_id: uuid) {
+    const addUserEventMutation = `mutation InsertUserEvents($user_id: String, $event_id: String) {
       insert_userEvents(objects: {user_id: $user_id, event_id: $event_id}) {
         affected_rows
         returning {
@@ -139,18 +150,21 @@ export default {
         },
       })
     );
-    function setEventID(id) {
-      eventID.value = id;
-    }
+
     doneAddUserEvent(() => {
       console.log(
-        "Event(" + eventID.value + ") for User(" + iserID.value + ") was added"
+        "Event(" + eventID.value + ") for User(" + userID.value + ") was added"
       );
     });
     return {
+      isUserEventExistQuery,
       setEventID,
+      getEventID,
       setUserID,
+      getUserID,
       addUserEvent,
+      doneAddUserEvent,
+      userEventExist,
       refetchUserEventExist,
       resultUserEventExist,
     };
@@ -159,17 +173,24 @@ export default {
     getImgPath(event) {
       return "img/" + (event.kdpv ? event.kdpv : event.events_eventType.image);
     },
-    eventAttend(event_id) {
+
+    async eventAttend(event_id) {
       const oneClerk = useClerkStore().clerk;
       if (oneClerk.user) {
-        this.setEventID(event_id);
         this.setUserID(oneClerk.user.id);
-        console.log(
-          "Event(" + event_id + ") for User(" + oneClerk.user.id + ") was added"
-        );
-        let exist = this.isUserEventExist(event_id, oneClerk.user.id);
-        if (!exist) {
-          // this.doneAddUserEvent();
+        this.setEventID(event_id);
+        let answer = await this.isUserEventExist();
+        console.log(`exist is ${answer}`);
+        if (!(answer > 0)) {
+          this.$q.notify({
+            message: "You attend this event",
+            icon: "fa-solid fa-square-plus",
+          });
+        } else {
+          this.$q.notify({
+            message: "You already attend this event",
+            icon: "fa-regular fa-square-check",
+          });
         }
       } else {
         this.$q.notify({
@@ -177,20 +198,60 @@ export default {
           icon: "fa-solid fa-right-to-bracket",
         });
       }
-      console.log("eventAttend: " + event_id);
+      console.log(` Event(${event_id}) for User(${oneClerk.user.id})`);
     },
-    isUserEventExist(event_id, user_id) {
-      this.setEventID(event_id);
-      this.setUserID(user_id);
-      this.refetchUserEventExist();
-      this.resultUserEventExist((queryResult) => {
-        console.log(queryResult.data);
-        console.log(queryResult.loading);
-        console.log(queryResult.networkStatus);
-        console.log(queryResult.stale);
+
+    async isUserEventExist() {
+      let count = 0;
+      // console.log(`isUserEventExist - 1`);
+
+      // this.refetchUserEventExist({
+      //   user_id: this.getUserID(),
+      //   event_id: this.getEventID(),
+      // });
+      // console.log(`isUserEventExist - 2`);
+
+      this.resultUserEventExist(async (queryResult) => {
+        if (!queryResult.loading) {
+          count = await queryResult.data.userEvents_aggregate.aggregate.count;
+          console.log(`isUserEventExist - 3(${queryResult.networkStatus})`);
+
+          console.log(`We have ${count} events`);
+        }
       });
-      return true;
+      // console.log(`isUserEventExist - 4(${res})`);
+
+      return count;
+
+      // this.$apollo
+      //   .query({
+      //     query: require("../apollo/queryes/countUsersEvent.gql"),
+      //     variables: { user_id: this.getUserID(), event_id: this.getEventID() },
+      //   })
+      //   .then((result) => {
+      //     count = result.userEvents_aggregate.aggregate.count;
+      //     console.log(`We have ${count} events`);
+      //   })
+      //   .catch((error) => {
+      //     console.log(error);
+      //   });
+
+      // getCount().then(() =>
+      //   this.resultUserEventExist((queryResult) => {
+      //     if (!queryResult.loading) {
+      //       console.log(
+      //         `We have ${queryResult.data.userEvents_aggregate.aggregate.count} events`
+      //       );
+      //       if (queryResult.data.userEvents_aggregate.aggregate.count > 0) {
+      //         return true;
+      //       } else {
+      //         return false;
+      //       }
+      //     }
+      //   })
+      // );
     },
+
     expandEvent(event_id) {
       const operateBlock = document.getElementById(event_id);
       if (operateBlock.style.display == "none") {
@@ -198,9 +259,6 @@ export default {
       } else {
         operateBlock.style.display = "none";
       }
-      // console.log(
-      //   "expandEvent: " + event_id + ", state: " + operateBlock.visible
-      // );
     },
   },
 };

@@ -1,0 +1,11 @@
+query checkUserEvent($user_id: String, $event_id: String) {
+  userEvents_aggregate(
+    where: {
+      _and: { event_id: { _eq: $event_id }, user_id: { _eq: $user_id } }
+    }
+  ) {
+    aggregate {
+      count(columns: event_id)
+    }
+  }
+}
